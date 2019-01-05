@@ -1,0 +1,32 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Deployment configuration for the sqlapi",
+  "Parameters": {
+    "DBName": {
+      "Type": "String",
+      "Description": "The name of the RDS database"
+    },
+    "DBUsername": {
+      "Type": "String"
+    },
+    "DBPassword": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "db": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "AllocatedStorage": "5",
+        "BackupRetentionPeriod": "0",
+        "DBInstanceClass": "db.t2.micro",
+        "DBInstanceIdentifier": { "Fn::Join": ["", [ { "Ref": "DBName" }, "Server" ]] },
+        "DBName": { "Ref": "DBName" },
+        "Engine": "mysql",
+        "MasterUsername": { "Ref": "DBUsername" },
+        "MasterUserPassword": { "Ref": "DBPassword" },
+        "PubliclyAccessible": true
+    }
+    }
+  }
+}

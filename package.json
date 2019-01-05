@@ -1,0 +1,15 @@
+{
+  "name": "sqlapi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "dotnet test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.384.0",
+    "lodash": "^4.17.11"
+  }
+}
