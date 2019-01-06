@@ -2,14 +2,13 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Deployment configuration for the sqlapi",
   "Parameters": {
-    "DBName": {
-      "Type": "String",
-      "Description": "The name of the RDS database"
-    },
     "DBUsername": {
       "Type": "String"
     },
     "DBPassword": {
+      "Type": "String"
+    },
+    "DockerLogin": {
       "Type": "String"
     }
   },
@@ -20,13 +19,95 @@
         "AllocatedStorage": "5",
         "BackupRetentionPeriod": "0",
         "DBInstanceClass": "db.t2.micro",
-        "DBInstanceIdentifier": { "Fn::Join": ["", [ { "Ref": "DBName" }, "Server" ]] },
-        "DBName": { "Ref": "DBName" },
+        "DBInstanceIdentifier": "sqlapiServer",
+        "DBName": "sqlapi",
         "Engine": "mysql",
         "MasterUsername": { "Ref": "DBUsername" },
         "MasterUserPassword": { "Ref": "DBPassword" },
         "PubliclyAccessible": true
-    }
+      }
+    },
+    "ec2Role": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [ {
+             "Effect": "Allow",
+             "Principal": {
+                "Service": [ "ec2.amazonaws.com" ]
+             },
+             "Action": [ "sts:AssumeRole" ]
+            } ]
+        },
+        "Policies": [ {
+          "PolicyName": "root",
+          "PolicyDocument": {
+             "Version" : "2012-10-17",
+             "Statement": [ {
+                "Effect": "Allow",
+                "Action": "ecr:*",
+                "Resource": "arn:aws:ecr:us-east-1:916437080264:repository/sqlapi*"
+             },
+            {
+              "Effect": "Allow",
+              "Action": "ecr:GetAuthorizationToken",
+              "Resource": "*"
+            } ]
+          }
+          } ],
+        "RoleName": "sqlapiecraccess"
+      }
+    },
+    "ec2Profile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Roles": [ { "Ref": "ec2Role" } ],
+        "InstanceProfileName": "sqlapiecraccess"
+      }
+    },
+    "ec2": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": "ami-009d6802948d06e52",
+        "InstanceType": "t2.micro",
+        "KeyName": "sqlapi",
+        "IamInstanceProfile": { "Ref": "ec2Profile" },
+        "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash -v\n",
+          "sudo yum update -y \n",
+          "sudo amazon-linux-extras install docker \n",
+          "sudo service docker start\n",
+          "sudo usermod -a -G docker ec2-user\n",
+          "docker info\n",
+          "$(aws ecr get-login --region us-east-1 --no-include-email)\n",
+          "\ndocker pull 916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest\n",
+          "docker run -d -p 80:80 --name sqlapi 916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest\n",
+          "sudo rm -f /etc/init.d/startapp\n",
+          "sudo echo #!/bin/bash -v > /etc/init.d/startapp\n",
+          "sudo echo sudo service docker start >> /etc/init.d/startapp\n",
+          "sudo echo $(aws ecr get-login --region us-east-1 --no-include-email) >> /etc/init.d/startapp\n",
+          "sudo echo docker pull 916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest >> /etc/init.d/startapp\n",
+          "sudo echo docker run -d -p 80:80 --name sqlapi 916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest >> /etc/init.d/startapp\n",
+          "sudo chmod a+x /etc/init.d/startapp"
+        ]]}}
+      }
+    },
+    "dockerRepo": {
+      "Type" : "AWS::ECR::Repository",
+      "Properties" : {
+        "RepositoryName" : "sqlapi"
+      }
+    },
+    "hostname": {
+      "Type" : "AWS::Route53::RecordSet",
+      "Properties" : {
+        "HostedZoneId" : "Z2FG1U6UOYE0RV",
+        "Name" : "sqlapi.pkehrer.click.",
+        "TTL" : "0",
+        "Type" : "CNAME",
+        "ResourceRecords" : [ { "Fn::GetAtt" : [ "ec2", "PublicDnsName" ] } ]
+      }
     }
   }
 }

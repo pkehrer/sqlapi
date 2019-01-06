@@ -4,15 +4,20 @@
    // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
    "version": "0.2.0",
    "configurations": [
-     {
-       "type": "node",
-       "request": "launch",
-       "name": "Deploy db",
-       "program": "${workspaceFolder}/aws/deploy.js",
-       "args": [
-
-       ]
-     },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Cloudformation",
+      "program": "${workspaceFolder}/aws/deploy.js",
+      "args": []
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Docker Push",
+      "program": "${workspaceFolder}/aws/docker-push.js",
+      "args": []
+    },
         {
             "name": ".NET Core Launch (web)",
             "type": "coreclr",
