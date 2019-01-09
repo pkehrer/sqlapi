@@ -4,12 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "rerunUserData": "sudo rm /var/lib/cloud/instances/*/sem/config_scripts_user",
     "test": "dotnet test",
+    "build": "dotnet build",
     "publish": "dotnet publish -f netcoreapp2.2 -c Release",
     "docker-build": "docker build -t sqlapi .",
     "docker-run": "docker run -p 8080:80 sqlapi:latest",
-    "docker": "run-s publish docker-build docker-run"
+    "docker": "run-s publish docker-build docker-run",
+    "deploy-ecr": "node aws/ecr-repo",
+    "delete-ecr": "node aws/ecr-repo delete",
+    "deploy-ecs": "node aws/deploy",
+    "delete-ecs": "node aws/deploy delete",
+    "deploy-db": "node aws/db",
+    "delete-db": "node aws/db delete",
+    "delete-all": "run-s delete-ecs delete-ecr delete-db",
+    "deploy-app": "run-s build publish docker-build deploy-ecr"
+
   },
   "author": "",
   "license": "ISC",

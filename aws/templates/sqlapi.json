@@ -2,31 +2,9 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Deployment configuration for the sqlapi",
   "Parameters": {
-    "DBUsername": {
-      "Type": "String"
-    },
-    "DBPassword": {
-      "Type": "String"
-    },
-    "DockerLogin": {
-      "Type": "String"
-    }
+
   },
   "Resources": {
-    "db": {
-      "Type": "AWS::RDS::DBInstance",
-      "Properties": {
-        "AllocatedStorage": "5",
-        "BackupRetentionPeriod": "0",
-        "DBInstanceClass": "db.t2.micro",
-        "DBInstanceIdentifier": "sqlapiServer",
-        "DBName": "sqlapi",
-        "Engine": "mysql",
-        "MasterUsername": { "Ref": "DBUsername" },
-        "MasterUserPassword": { "Ref": "DBPassword" },
-        "PubliclyAccessible": true
-      }
-    },
     "ec2Role": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -35,7 +13,7 @@
           "Statement": [ {
              "Effect": "Allow",
              "Principal": {
-                "Service": [ "ec2.amazonaws.com" ]
+                "Service": [ "ec2.amazonaws.com", "ecs-tasks.amazonaws.com" ]
              },
              "Action": [ "sts:AssumeRole" ]
             } ]
@@ -46,68 +24,225 @@
              "Version" : "2012-10-17",
              "Statement": [ {
                 "Effect": "Allow",
-                "Action": "ecr:*",
-                "Resource": "arn:aws:ecr:us-east-1:916437080264:repository/sqlapi*"
-             },
-            {
-              "Effect": "Allow",
-              "Action": "ecr:GetAuthorizationToken",
-              "Resource": "*"
-            } ]
+                "Action": ["ecr:*", "ecs:*"],
+                "Resource": "*"
+             }]
           }
           } ],
         "RoleName": "sqlapiecraccess"
       }
     },
-    "ec2Profile": {
-      "Type": "AWS::IAM::InstanceProfile",
-      "Properties": {
-        "Roles": [ { "Ref": "ec2Role" } ],
-        "InstanceProfileName": "sqlapiecraccess"
+    "AutoscalingRole":{
+      "Type":"AWS::IAM::Role",
+      "Properties":{
+        "AssumeRolePolicyDocument":{
+          "Statement":[
+            {
+              "Effect":"Allow",
+              "Principal":{
+                "Service":[
+                  "application-autoscaling.amazonaws.com"
+                ]
+              },
+              "Action":[
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path":"/",
+        "Policies":[
+          {
+            "PolicyName":"service-autoscaling",
+            "PolicyDocument":{
+              "Statement":[
+                {
+                  "Effect":"Allow",
+                  "Action":[
+                    "application-autoscaling:*",
+                    "cloudwatch:DescribeAlarms",
+                    "cloudwatch:PutMetricAlarm",
+                    "ecs:DescribeServices",
+                    "ecs:UpdateService"
+                  ],
+                  "Resource":"*"
+                }
+              ]
+            }
+          }
+        ]
       }
     },
-    "ec2": {
-      "Type": "AWS::EC2::Instance",
-      "Properties": {
-        "ImageId": "ami-009d6802948d06e52",
-        "InstanceType": "t2.micro",
-        "KeyName": "sqlapi",
-        "IamInstanceProfile": { "Ref": "ec2Profile" },
-        "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
-          "#!/bin/bash -v\n",
-          "sudo yum update -y \n",
-          "sudo amazon-linux-extras install docker \n",
-          "sudo service docker start\n",
-          "sudo usermod -a -G docker ec2-user\n",
-          "docker info\n",
-          "$(aws ecr get-login --region us-east-1 --no-include-email)\n",
-          "\ndocker pull 916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest\n",
-          "docker run -d -p 80:80 --name sqlapi 916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest\n",
-          "sudo rm -f /etc/init.d/startapp\n",
-          "sudo echo #!/bin/bash -v > /etc/init.d/startapp\n",
-          "sudo echo sudo service docker start >> /etc/init.d/startapp\n",
-          "sudo echo $(aws ecr get-login --region us-east-1 --no-include-email) >> /etc/init.d/startapp\n",
-          "sudo echo docker pull 916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest >> /etc/init.d/startapp\n",
-          "sudo echo docker run -d -p 80:80 --name sqlapi 916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest >> /etc/init.d/startapp\n",
-          "sudo chmod a+x /etc/init.d/startapp"
-        ]]}}
-      }
-    },
-    "dockerRepo": {
-      "Type" : "AWS::ECR::Repository",
-      "Properties" : {
-        "RepositoryName" : "sqlapi"
+    "instanceprofile": {
+       "Type": "AWS::IAM::InstanceProfile",
+       "Properties": {
+          "Roles": [ {"Ref": "ec2Role"} ],
+          "InstanceProfileName": "sqlapi"
+       }
+    },      
+    "loadbalancer": {
+      "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties" : {    
+        "IpAddressType" : "ipv4",
+        "Name" : "sqlapi",
+        "Scheme" : "internet-facing",
+        "SecurityGroups" : [ "sg-df106db9"],
+        "Subnets": ["subnet-07dddf2c","subnet-f5f46e90"],
+        "Type" : "application"
       }
     },
     "hostname": {
       "Type" : "AWS::Route53::RecordSet",
+      "DependsOn": "loadbalancer",
       "Properties" : {
         "HostedZoneId" : "Z2FG1U6UOYE0RV",
         "Name" : "sqlapi.pkehrer.click.",
         "TTL" : "0",
         "Type" : "CNAME",
-        "ResourceRecords" : [ { "Fn::GetAtt" : [ "ec2", "PublicDnsName" ] } ]
+        "ResourceRecords" : [ { "Fn::GetAtt" : [ "loadbalancer", "DNSName" ] } ]
+      }
+    },
+    "targetgroup": {
+      "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "DependsOn": "loadbalancer",
+      "Properties" : {
+        "HealthCheckIntervalSeconds" : 30,
+        "HealthCheckPath" : "/api/values/1",
+        "HealthCheckPort" : "traffic-port",
+        "HealthCheckProtocol" : "HTTP",
+        "HealthCheckTimeoutSeconds" : 5,
+        "HealthyThresholdCount" : 5,
+        "Matcher" : {"HttpCode": "200"},
+        "Name" : "sqlapi",
+        "Port" : 80,
+        "Protocol" : "HTTP",
+        "TargetType" : "instance",
+        "UnhealthyThresholdCount" : 2,
+        "VpcId": "vpc-bf55d6db"
+      }
+    },
+    "alblistener": {
+      "Type": "AWS::ElasticLoadBalancingV2::Listener",
+      "DependsOn": "targetgroup",
+      "Properties": {
+        "DefaultActions":[
+          {
+            "Type":"forward",
+            "TargetGroupArn":{ "Ref":"targetgroup" }
+          }
+        ],
+        "LoadBalancerArn":{ "Ref":"loadbalancer" },
+        "Port":"80",
+        "Protocol":"HTTP"
+      }
+    },
+    "alblistenerrule":{
+      "Type":"AWS::ElasticLoadBalancingV2::ListenerRule",
+      "DependsOn":"alblistener",
+      "Properties":{
+        "Actions":[{
+            "Type":"forward",
+            "TargetGroupArn":{ "Ref":"targetgroup" }
+          }],
+        "Conditions":[{
+            "Field":"path-pattern",
+            "Values":[ "/" ]
+          }],
+        "ListenerArn":{ "Ref":"alblistener" },
+        "Priority":1
+      }
+    },
+    "cluster": {
+      "Type": "AWS::ECS::Cluster",
+      "DependsOn": "alblistener",
+      "Properties": {
+        "ClusterName": "sqlapi"
+      }
+    },
+    "containerinstances":{
+      "Type":"AWS::AutoScaling::LaunchConfiguration",
+      "DependsOn": "cluster",
+      "Properties":{
+        "ImageId":"ami-eca289fb",
+        "InstanceType":"t2.micro",
+        "IamInstanceProfile": { "Ref": "instanceprofile" },
+        "KeyName": "sqlapi",
+        "UserData":{
+          "Fn::Base64":{
+            "Fn::Join":[
+              "",
+              [
+                "#!/bin/bash -xe\n",
+                "echo ECS_CLUSTER=", { "Ref":"cluster" }, " >> /etc/ecs/ecs.config\n",
+                "yum install -y aws-cfn-bootstrap\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                "         --stack sqlapi",
+                "         --resource asg ",
+                "         --region us-east-1\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "asg":{
+      "Type":"AWS::AutoScaling::AutoScalingGroup",
+      "DependsOn": "containerinstances",
+      "Properties":{
+        "LaunchConfigurationName":{ "Ref":"containerinstances" },
+        "AvailabilityZones": ["us-east-1a"],
+        "MinSize":"1",
+        "MaxSize":"1",
+        "DesiredCapacity":"1"
+      },
+      "CreationPolicy":{
+        "ResourceSignal":{
+          "Timeout":"PT15M"
+        }
+      },
+      "UpdatePolicy":{
+        "AutoScalingReplacingUpdate":{
+          "WillReplace":"true"
+        }
+      }
+    },
+    "taskdefinition": {
+      "Type" : "AWS::ECS::TaskDefinition",
+      "DependsOn": "cluster",
+      "Properties" : {
+        "ContainerDefinitions": [
+          {
+            "Name": "sqlapi",
+            "Cpu": 128,
+            "Memory": 900,
+            "Image" : "916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest",
+            "PortMappings": [{ "ContainerPort": 80}]
+          }
+        ],
+        "Cpu" : "150",
+        "Memory" : "950"
+      }
+    },
+    "ecsService": {
+      "Type" : "AWS::ECS::Service",
+      "DependsOn": "taskdefinition",
+      "Properties" : {
+        "Cluster" : {"Ref": "cluster"},
+        "DesiredCount" : 1,
+        "LaunchType" : "EC2",
+        "ServiceName" : "sqlapi",
+        "TaskDefinition" : {"Ref": "taskdefinition"},
+        "LoadBalancers": [
+          {
+            "ContainerName": "sqlapi",
+            "ContainerPort": 80,
+            "TargetGroupArn": { "Ref": "targetgroup" }
+          }
+        ]
       }
     }
+  },
+  "Outputs": {
+
   }
 }

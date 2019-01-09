@@ -20,9 +20,11 @@ function system(command) {
   console.log(output.toString())
 }
 
-run()
+module.exports = { run }
+
+/*run()
   .then(() => console.log('Done'))
   .catch(error => {
     console.log('*** ERROR ***')
     console.log(error.toString())
-  })
+  })*/

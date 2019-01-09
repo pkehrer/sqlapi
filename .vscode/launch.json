@@ -7,9 +7,15 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Cloudformation",
-      "program": "${workspaceFolder}/aws/deploy.js",
-      "args": []
+      "name": "ecr cf - delete",
+      "program": "${workspaceFolder}/aws/ecr-repo.js",
+      "args": ["delete"]
+    },
+        {
+      "type": "node",
+      "request": "launch",
+      "name": "db",
+      "program": "${workspaceFolder}/aws/db.js"
     },
     {
       "type": "node",
