@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Service.Models
 {
@@ -7,19 +6,27 @@ namespace Service.Models
     {
         public DbResult()
         {
-            Rows = new List<List<object>>();
+            ColumnNames = new string[0];
+            Rows = new object[0][];
         }
 
-        public List<string> ColumnNames { get; set; }
-        public List<List<object>> Rows { get; }
+        public string[] ColumnNames { get; set; }
+        public object[][] Rows { get; set; }
 
         public override string ToString()
         {
-            var s = string.Join('\t', ColumnNames.ToArray());
+            const string emptyResponse = "Successful execution returned no response.";
+            if (ColumnNames.Length == 0)
+            {
+                return emptyResponse + Environment.NewLine;
+            }
+
+            var s = string.Join('\t', ColumnNames);
             s += Environment.NewLine;
             foreach (var row in Rows)
             {
-                s += string.Join('\t', row.ToArray());
+                s += string.Join('\t', row);
+                s += Environment.NewLine;
             }
             return s;
         }

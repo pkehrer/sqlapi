@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Service.Services
+namespace Service.Models
 {
-    public class ConnectionManager
+    public class ConnectionResponse
     {
+        public string ConnectionId { get; set; }
     }
 }

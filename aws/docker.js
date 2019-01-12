@@ -1,11 +1,19 @@
 const AWS = require('aws-sdk'),
   _ = require('lodash'),
-  opt = require('../secrets/options')
+  opt = require('../secrets/options'),
+  cp = require('child_process'),
+  { ecr } = require('./aws')
 
-const ecr = new AWS.ECR(opt.awsConfig)
+
+async function dockerPush() {
+  const loginCommand = await getLoginCommand()
+  system(loginCommand)
+  system(`docker tag ${opt.name}:latest 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}:latest`)
+  system(`docker push 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}:latest`)
+}
 
 async function getLoginCommand(extra = "") {
-  const response = await ecr.getAuthorizationToken({}).promise()
+  const response = await ecr().getAuthorizationToken({}).promise()
   const base64Token = response.authorizationData[0].authorizationToken
   const decoded = Buffer.from(base64Token, 'base64').toString()
   const username = _.split(decoded, ':')[0]
@@ -13,4 +21,10 @@ async function getLoginCommand(extra = "") {
   return `docker login ${extra} -u ${username} -p ${password} ${response.authorizationData[0].proxyEndpoint}`
 }
 
-module.exports = { getLoginCommand }
+function system(command) {
+  console.log("running command: " + command)
+  const output = cp.execSync(command, { stdio: ['ignore', 'pipe', 'ignore'] })
+  console.log(output.toString())
+}
+
+module.exports = { dockerPush }

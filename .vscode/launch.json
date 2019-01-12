@@ -7,21 +7,15 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "ecr cf - delete",
-      "program": "${workspaceFolder}/aws/ecr-repo.js",
+      "name": "aws delete",
+      "program": "${workspaceFolder}/aws/deploymentuser.js",
       "args": ["delete"]
-    },
-        {
-      "type": "node",
-      "request": "launch",
-      "name": "db",
-      "program": "${workspaceFolder}/aws/db.js"
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "Docker Push",
-      "program": "${workspaceFolder}/aws/docker-push.js",
+      "name": "aws create",
+      "program": "${workspaceFolder}/aws/deploymentuser.js",
       "args": []
     },
         {

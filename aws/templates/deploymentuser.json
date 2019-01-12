@@ -1,0 +1,110 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Deployment configuration for the sqlapi (iam role for deployment)",
+  "Parameters": {
+    
+  },
+  "Resources": {
+    "user": {
+      "Type": "AWS::IAM::User",
+      "Properties": {
+        "UserName": "sqlapi-deployment-user",
+        "Policies": [ 
+          {
+            "PolicyName": "sqlapi-deployment-policy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                  {
+                      "Sid": "VisualEditor0",
+                      "Effect": "Allow",
+                      "Action": [
+                          "ecr:UploadLayerPart",
+                          "ecr:DeleteRepository",
+                          "ecr:PutImage",
+                          "cloudformation:DescribeStacks",
+                          "cloudformation:CreateStack",
+                          "rds:CreateDBInstance",
+                          "cloudformation:DeleteStack",
+                          "ecr:CompleteLayerUpload",
+                          "cloudformation:UpdateStack",
+                          "rds:ModifyDBInstance",
+                          "ecr:DescribeRepositories",
+                          "ecr:InitiateLayerUpload",
+                          "ecr:BatchCheckLayerAvailability",
+                          "rds:DeleteDBInstance"
+                      ],
+                      "Resource": [
+                          "arn:aws:ecr:us-east-1:916437080264:repository/sqlapi*",
+                          "arn:aws:cloudformation:us-east-1:916437080264:stack/sqlapi*",
+                          "arn:aws:rds:us-east-1:916437080264:*"
+                      ]
+                  },
+                  {
+                      "Sid": "VisualEditor1",
+                      "Effect": "Allow",
+                      "Action": [
+                          "iam:*",
+                          "ecr:CreateRepository",
+                          "ecr:GetDownloadUrlForLayer",
+                          "route53:*",
+                          "ecr:BatchGetImage",
+                          "ecr:DescribeImages",
+                          "ec2:*",
+                          "ecr:GetAuthorizationToken",
+                          "ecr:BatchCheckLayerAvailability",
+                          "ecr:GetRepositoryPolicy",
+                          "cloudformation:DescribeStacks",
+                          "elasticloadbalancing:*",
+                          "autoscaling:*",
+                          "application-autoscaling:*"
+                      ],
+                      "Resource": "*"
+                  },
+                  {
+                    "Sid": "VisualEditor2",
+                    "Effect": "Allow",
+                    "Action": "rds:DescribeDBInstances",
+                    "Resource": "arn:aws:rds:us-east-1:916437080264:*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "codecommit:*",
+                  "Resource": "arn:aws:codecommit:us-east-1:916437080264:sqlapi"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "s3:*",
+                  "Resource": "arn:aws:s3:::sqlapi-codepipeline"
+                },
+                  {
+                      "Sid": "ecs",
+                      "Effect": "Allow",
+                      "Action": "ecs:*",
+                      "Resource": "*"
+                  }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "accesskey": {
+       "Type": "AWS::IAM::AccessKey",
+       "DependsOn": "user",
+       "Properties": {
+          "UserName": "sqlapi-deployment-user"
+       }
+    }     
+  },
+  "Outputs": {
+    "accesskeyid": {
+      "Description": "accesskeyid of the created user",
+      "Value": { "Ref": "accesskey" }
+    },
+    "secretaccesskey": {
+      "Description": "secretaccesskey of the created user",
+      "Value": { "Fn::GetAtt":[ "accesskey", "SecretAccessKey" ] }
+    }
+  }
+}

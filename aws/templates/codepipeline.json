@@ -1,0 +1,84 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Deployment configuration for the sqlapi (code pipeline)",
+  "Parameters": {
+    
+  },
+  "Resources": {
+    "repo": {
+      "Type" : "AWS::CodeCommit::Repository",
+      "Properties" : {
+        "RepositoryName" : "sqlapi"
+      }
+    },
+
+    "pipelinerole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "sqlapi-codepipeline",
+        "AssumeRolePolicyDocument": {
+          "Version" : "2012-10-17",
+          "Statement": [{
+             "Effect": "Allow",
+             "Principal": {
+                "Service": [ "codepipeline.amazonaws.com" ]
+             },
+             "Action": [ "sts:AssumeRole" ]
+            }]
+        },
+        "Policies": [ {
+          "PolicyName": "root",
+          "PolicyDocument": {
+             "Version" : "2012-10-17",
+             "Statement": [ {
+                "Effect": "Allow",
+                "Action": "*",
+                "Resource": "*"
+             }]
+          }
+        }]
+      }
+    },
+
+    "artifactbucket": {
+      "Type" : "AWS::S3::Bucket",
+      "Properties" : {       
+        "BucketName" : "sqlapi-codepipeline"
+
+      }
+    },
+
+    "pipeline": {
+      "Type" : "AWS::CodePipeline::Pipeline",
+      "Properties" : {
+        "ArtifactStore" : {
+          "Location": "sqlapi-codepipeline",
+          "Type": "S3"
+        },
+        "RoleArn" : { "Ref": "pipelinerole" },
+        "Stages" : [
+          {
+            "Actions": [
+              {
+                "ActionTypeId" : {
+                  "Category" : "Build",
+                  "Owner" : "AWS",
+                  "Provider" : String,
+                  "Version" : String
+                },
+                "Configuration" : { Key : Value },
+                "InputArtifacts" : [ InputArtifacts, ... ],
+                "Name" : String,
+                "OutputArtifacts" : [ OutputArtifacts, ... ],
+                "Region" : String,
+                "RoleArn" : String,
+                "RunOrder" : Integer
+              }
+            ],
+            "Name": "Build"
+          }
+        ]
+      }
+    }
+  }
+}

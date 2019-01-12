@@ -7,6 +7,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace Service
 {
@@ -19,6 +20,11 @@ namespace Service
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.SetBasePath(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location));
+                    config.AddJsonFile("db.json");
+                })
                 .UseStartup<Startup>();
     }
 }
