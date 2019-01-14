@@ -48,7 +48,7 @@ function pollStack({ StackName }) {
 
       lastStatus = stack.StackStatus
       const timeSinceChange = (new Date() - lastStatusTime) / 1000
-      const timeString = timeSinceChange > 0 ? `(${timeSinceChange}s)` : ''
+      const timeString = timeSinceChange > 0 ? `(${formatTime(timeSinceChange)})` : ''
 
       inline(`Current Status: ${stack.StackStatus} ${timeString}`)
 
@@ -61,6 +61,18 @@ function pollStack({ StackName }) {
 
     polling.run()
   })
+}
+
+function formatTime(sec) {
+  const hours = Math.floor(sec / 3600)
+  const minutes = Math.floor((sec - 3600 * hours) / 60)
+  const seconds = Math.floor(sec - 3600 * hours - 60 * minutes)
+
+  const hstr = hours > 1 ? `${hours}hrs ` : hours == 1 ? '1hr ' : ''
+  const mstr = minutes > 0 ? `${minutes}m ` : ''
+  const sstr = `${seconds}s`
+
+  return hstr + mstr + sstr
 }
 
 module.exports = { pollStack }

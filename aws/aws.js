@@ -19,5 +19,6 @@ function updateConfig(config) {
 module.exports = {
   cloudformation: () => new AWS.CloudFormation(credentials),
   ecr: () => new AWS.ECR(credentials),
+  ecs: () => new AWS.ECS(credentials),
   updateConfig
 }

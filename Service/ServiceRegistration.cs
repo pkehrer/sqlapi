@@ -16,6 +16,8 @@ namespace Service
 
         public void Register()
         {
+            services.AddCors();
+
             services.Configure<DbConnectionConfig>(configuration.GetSection("DbConnectionConfig"));
             services.AddSingleton<UserConnectionManager>();
             services.AddSingleton<AdminConnection>();

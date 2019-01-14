@@ -18,6 +18,9 @@ async function writeUserCredentials(stack) {
   const creds = { accessKeyId, secretAccessKey, region }
   const secretPath = path.join(__dirname, '../secrets/deploymentuser.json')
   fs.writeFileSync(secretPath, JSON.stringify(creds, null, 2))
+  updateConfig(creds)
 }
+
+
 updateConfig({ region: 'us-east-1' })
 runStack(stackInfo, { afterCreate: writeUserCredentials })

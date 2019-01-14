@@ -15,7 +15,11 @@
     "delete-ecs": "node aws/ecs delete",
     "deploy-db": "node aws/db",
     "delete-db": "node aws/db delete",
-    "delete-all": "run-s delete-ecs delete-ecr delete-db delete-deploymentuser",
+
+    "update-app": "node aws/deploy",
+    "deploy": "run-s dotnet-publish docker-build deploy-ecr update-app",
+
+    "delete-all": "run-s  delete-ecs delete-ecr delete-db delete-deploymentuser",
     "deploy-all": "run-s dotnet-publish docker-build deploy-deploymentuser deploy-ecr deploy-db deploy-ecs"
   },
   "dependencies": {

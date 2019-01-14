@@ -2,9 +2,13 @@ const opt = require('../secrets/options'),
   template = require('./templates/ecs.json'),
   { runStack } = require('./stackrunner')
 
+const Parameters = [
+  //{ ParameterKey: "Timestamp", ParameterValue: new Date().getTime().toString() }
+]
+
 const stackInfo = {
   StackName: opt.name,
-  Parameters: [],
+  Parameters,
   template
 }
 

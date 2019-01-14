@@ -1,10 +1,7 @@
-const AWS = require('aws-sdk'),
-  opt = require('../secrets/options'),
-  { dockerPush } = require('./docker'),
+const { dockerPush } = require('./docker'),
   template = require('./templates/ecr.json'),
-  { runStack } = require('./stackrunner')
-
-const ecr = new AWS.ECR(opt.awsConfig)
+  { runStack } = require('./stackrunner'),
+  { ecr } = require('./aws')
 
 const stackInfo = {
   StackName: 'sqlapiecr',
@@ -13,7 +10,7 @@ const stackInfo = {
 }
 
 async function deleteEcrRepository() {
-  await ecr.deleteRepository({
+  await ecr().deleteRepository({
     repositoryName: 'sqlapi',
     force: true
   }).promise()

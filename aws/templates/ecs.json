@@ -40,13 +40,9 @@
             {
               "Effect":"Allow",
               "Principal":{
-                "Service":[
-                  "application-autoscaling.amazonaws.com"
-                ]
+                "Service":["application-autoscaling.amazonaws.com"]
               },
-              "Action":[
-                "sts:AssumeRole"
-              ]
+              "Action":["sts:AssumeRole"]
             }
           ]
         },
@@ -79,9 +75,48 @@
           "Roles": [ {"Ref": "ec2Role"} ],
           "InstanceProfileName": "sqlapi"
        }
-    },      
+    },
+    
+    "ecsServiceRole":{
+      "Type":"AWS::IAM::Role",
+      "Properties":{
+        "AssumeRolePolicyDocument":{
+          "Statement":[{
+              "Effect":"Allow",
+              "Principal":{
+                "Service":["ecs.amazonaws.com"]
+              },
+              "Action":["sts:AssumeRole"]
+            }]
+        },
+        "Path":"/",
+        "Policies":[
+          {
+            "PolicyName":"ecs-service",
+            "PolicyDocument":{
+              "Statement":[
+                {
+                  "Effect":"Allow",
+                  "Action":[
+                    "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+                    "elasticloadbalancing:DeregisterTargets",
+                    "elasticloadbalancing:Describe*",
+                    "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+                    "elasticloadbalancing:RegisterTargets",
+                    "ec2:Describe*",
+                    "ec2:AuthorizeSecurityGroupIngress"
+                  ],
+                  "Resource":"*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
     "loadbalancer": {
       "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "DependsOn": "ecsServiceRole",
       "Properties" : {    
         "IpAddressType" : "ipv4",
         "Name" : "sqlapi",
@@ -107,15 +142,19 @@
       "DependsOn": "loadbalancer",
       "Properties" : {
         "HealthCheckIntervalSeconds" : 30,
-        "HealthCheckPath" : "/api/values/1",
+        "HealthCheckPath" : "/livecheck",
         "HealthCheckPort" : "traffic-port",
         "HealthCheckProtocol" : "HTTP",
         "HealthCheckTimeoutSeconds" : 5,
         "HealthyThresholdCount" : 5,
-        "Matcher" : {"HttpCode": "200"},
+        "Matcher" : {"HttpCode": "204"},
         "Name" : "sqlapi",
         "Port" : 80,
         "Protocol" : "HTTP",
+        "TargetGroupAttributes": [{
+          "Key": "deregistration_delay.timeout_seconds",
+          "Value": "10"
+        }],
         "TargetType" : "instance",
         "UnhealthyThresholdCount" : 2,
         "VpcId": "vpc-bf55d6db"
@@ -191,8 +230,8 @@
       "Properties":{
         "LaunchConfigurationName":{ "Ref":"containerinstances" },
         "AvailabilityZones": ["us-east-1a"],
-        "MinSize":"1",
-        "MaxSize":"1",
+        "MinSize":"0",
+        "MaxSize":"2",
         "DesiredCapacity":"1"
       },
       "CreationPolicy":{
@@ -230,8 +269,19 @@
         "Cluster" : {"Ref": "cluster"},
         "DesiredCount" : 1,
         "LaunchType" : "EC2",
-        "ServiceName" : "sqlapi",
+        "ServiceName" : "sqalpi",
+        "Role": {"Ref": "ecsServiceRole"},
         "TaskDefinition" : {"Ref": "taskdefinition"},
+        "DeploymentConfiguration": {
+          "MaximumPercent": 100,
+          "MinimumHealthyPercent": 0
+        },
+        "PlacementStrategies": [
+          {
+            "Type": "spread",
+            "Field": "instanceId"
+          }
+        ],
         "LoadBalancers": [
           {
             "ContainerName": "sqlapi",
@@ -242,7 +292,5 @@
       }
     }
   },
-  "Outputs": {
-
-  }
+  "Outputs": {  }
 }

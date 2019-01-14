@@ -19,7 +19,7 @@ namespace Service.Controllers
         {
             _connectionManager = connectionManager;
         }
-
+        
         [HttpPost("connection")]
         public async Task<ActionResult<ConnectionResponse>> OpenConnection()
         {
