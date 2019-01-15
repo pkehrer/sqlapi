@@ -4,7 +4,7 @@ const opt = require('../secrets/options'),
   { getImageRevision } = require('./docker')
 
 const Parameters = [
-  { ParameterKey: "ImageRevision", ParameterValue: getImageRevision() }
+  { ParameterKey: "ImageRevision", ParameterValue: getImageRevision().toString() }
 ]
 
 const stackInfo = {
