@@ -1,9 +1,10 @@
 const opt = require('../secrets/options'),
   template = require('./templates/ecs.json'),
-  { runStack } = require('./stackrunner')
+  { runStack } = require('./stackrunner'),
+  { getImageRevision } = require('./docker')
 
 const Parameters = [
-  { ParameterKey: "Timestamp", ParameterValue: new Date().getTime().toString() }
+  { ParameterKey: "ImageRevision", ParameterValue: getImageRevision() }
 ]
 
 const stackInfo = {

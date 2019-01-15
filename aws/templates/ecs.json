@@ -2,7 +2,7 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Deployment configuration for the sqlapi",
   "Parameters": {
-    "Timestamp": {
+    "ImageRevision": {
       "Type": "String"
     }
   },
@@ -247,10 +247,10 @@
         "Family": "sqlapi",
         "ContainerDefinitions": [
           {
-            "Name": {"Fn::Join": ["", ["sqlapi", {"Ref": "Timestamp"}]] },
+            "Name": "sqlapi",
             "Cpu": 128,
             "Memory": 900,
-            "Image" : "916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest",
+            "Image" : { "Fn::Join": ["", ["916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:", { "Ref": "ImageRevision" }]]},
             "PortMappings": [{ "ContainerPort": 80}]
           }
         ],
@@ -279,7 +279,7 @@
         ],
         "LoadBalancers": [
           {
-            "ContainerName": {"Fn::Join": ["", ["sqlapi", {"Ref": "Timestamp"}]] },
+            "ContainerName": "sqlapi",
             "ContainerPort": 80,
             "TargetGroupArn": { "Ref": "targetgroup" }
           }

@@ -8,8 +8,9 @@ const AWS = require('aws-sdk'),
 async function dockerPush() {
   const loginCommand = await getLoginCommand()
   system(loginCommand)
-  system(`docker tag ${opt.name}:latest 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}`)
-  system(`docker push 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}`)
+  const revision = getImageRevision()
+  system(`docker tag ${opt.name}:latest 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}:${revision}`)
+  system(`docker push 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}:${revision}`)
 }
 
 async function getLoginCommand(extra = "") {
@@ -21,6 +22,10 @@ async function getLoginCommand(extra = "") {
   return `docker login ${extra} -u ${username} -p ${password} ${response.authorizationData[0].proxyEndpoint}`
 }
 
+function getImageRevision() {
+  const command = 'git log -1 --pretty=%h'
+  return cp.execSync(command, { stdio: ['ignore', 'pipe', 'ignore'] })
+}
 
 function system(command) {
   console.log("running command: " + command)
@@ -28,4 +33,4 @@ function system(command) {
   console.log(output.toString())
 }
 
-module.exports = { dockerPush }
+module.exports = { dockerPush, getImageRevision }
