@@ -8,8 +8,8 @@ const AWS = require('aws-sdk'),
 async function dockerPush() {
   const loginCommand = await getLoginCommand()
   system(loginCommand)
-  system(`docker tag ${opt.name}:latest 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}:latest`)
-  system(`docker push 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}:latest`)
+  system(`docker tag ${opt.name}:latest 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}`)
+  system(`docker push 916437080264.dkr.ecr.us-east-1.amazonaws.com/${opt.name}`)
 }
 
 async function getLoginCommand(extra = "") {
@@ -20,6 +20,7 @@ async function getLoginCommand(extra = "") {
   const password = _.split(decoded, ':')[1]
   return `docker login ${extra} -u ${username} -p ${password} ${response.authorizationData[0].proxyEndpoint}`
 }
+
 
 function system(command) {
   console.log("running command: " + command)

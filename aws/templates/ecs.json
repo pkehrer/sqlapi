@@ -2,7 +2,9 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Deployment configuration for the sqlapi",
   "Parameters": {
-
+    "Timestamp": {
+      "Type": "String"
+    }
   },
   "Resources": {
     "ec2Role": {
@@ -10,15 +12,15 @@
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Version" : "2012-10-17",
-          "Statement": [ {
+          "Statement": [{
              "Effect": "Allow",
              "Principal": {
                 "Service": [ "ec2.amazonaws.com", "ecs-tasks.amazonaws.com" ]
              },
              "Action": [ "sts:AssumeRole" ]
-            } ]
+          }]
         },
-        "Policies": [ {
+        "Policies": [{
           "PolicyName": "root",
           "PolicyDocument": {
              "Version" : "2012-10-17",
@@ -28,33 +30,32 @@
                 "Resource": "*"
              }]
           }
-          } ],
-        "RoleName": "sqlapiecraccess"
+        }]
       }
     },
     "AutoscalingRole":{
       "Type":"AWS::IAM::Role",
       "Properties":{
-        "AssumeRolePolicyDocument":{
-          "Statement":[
+        "AssumeRolePolicyDocument": {
+          "Statement": [
             {
-              "Effect":"Allow",
+              "Effect": "Allow",
               "Principal":{
-                "Service":["application-autoscaling.amazonaws.com"]
+                "Service": [ "application-autoscaling.amazonaws.com" ]
               },
-              "Action":["sts:AssumeRole"]
+              "Action": [ "sts:AssumeRole" ]
             }
           ]
         },
         "Path":"/",
-        "Policies":[
+        "Policies": [
           {
-            "PolicyName":"service-autoscaling",
+            "PolicyName":"root",
             "PolicyDocument":{
-              "Statement":[
+              "Statement": [
                 {
                   "Effect":"Allow",
-                  "Action":[
+                  "Action": [
                     "application-autoscaling:*",
                     "cloudwatch:DescribeAlarms",
                     "cloudwatch:PutMetricAlarm",
@@ -71,9 +72,9 @@
     },
     "instanceprofile": {
        "Type": "AWS::IAM::InstanceProfile",
+       "DependsOn": "ec2Role",
        "Properties": {
-          "Roles": [ {"Ref": "ec2Role"} ],
-          "InstanceProfileName": "sqlapi"
+          "Roles": [ {"Ref": "ec2Role"} ]
        }
     },
     
@@ -92,7 +93,7 @@
         "Path":"/",
         "Policies":[
           {
-            "PolicyName":"ecs-service",
+            "PolicyName":"root",
             "PolicyDocument":{
               "Statement":[
                 {
@@ -116,10 +117,8 @@
     },
     "loadbalancer": {
       "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
-      "DependsOn": "ecsServiceRole",
       "Properties" : {    
         "IpAddressType" : "ipv4",
-        "Name" : "sqlapi",
         "Scheme" : "internet-facing",
         "SecurityGroups" : [ "sg-df106db9"],
         "Subnets": ["subnet-07dddf2c","subnet-f5f46e90"],
@@ -139,7 +138,6 @@
     },
     "targetgroup": {
       "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
-      "DependsOn": "loadbalancer",
       "Properties" : {
         "HealthCheckIntervalSeconds" : 30,
         "HealthCheckPath" : "/livecheck",
@@ -148,7 +146,6 @@
         "HealthCheckTimeoutSeconds" : 5,
         "HealthyThresholdCount" : 5,
         "Matcher" : {"HttpCode": "204"},
-        "Name" : "sqlapi",
         "Port" : 80,
         "Protocol" : "HTTP",
         "TargetGroupAttributes": [{
@@ -162,45 +159,44 @@
     },
     "alblistener": {
       "Type": "AWS::ElasticLoadBalancingV2::Listener",
-      "DependsOn": "targetgroup",
+      "DependsOn": ["targetgroup", "loadbalancer"],
       "Properties": {
-        "DefaultActions":[
+        "DefaultActions": [
           {
             "Type":"forward",
-            "TargetGroupArn":{ "Ref":"targetgroup" }
+            "TargetGroupArn": { "Ref":"targetgroup" }
           }
         ],
-        "LoadBalancerArn":{ "Ref":"loadbalancer" },
+        "LoadBalancerArn": { "Ref":"loadbalancer" },
         "Port":"80",
         "Protocol":"HTTP"
       }
     },
     "alblistenerrule":{
-      "Type":"AWS::ElasticLoadBalancingV2::ListenerRule",
-      "DependsOn":"alblistener",
-      "Properties":{
-        "Actions":[{
-            "Type":"forward",
-            "TargetGroupArn":{ "Ref":"targetgroup" }
-          }],
+      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+      "DependsOn": ["alblistener", "targetgroup"],
+      "Properties": {
+        "Actions": [{
+            "Type": "forward",
+            "TargetGroupArn" : { "Ref":"targetgroup" }
+        }],
         "Conditions":[{
-            "Field":"path-pattern",
-            "Values":[ "/" ]
-          }],
+            "Field": "path-pattern",
+            "Values": [ "/" ]
+        }],
         "ListenerArn":{ "Ref":"alblistener" },
-        "Priority":1
+        "Priority": 1
       }
     },
     "cluster": {
       "Type": "AWS::ECS::Cluster",
-      "DependsOn": "alblistener",
       "Properties": {
         "ClusterName": "sqlapi"
       }
     },
     "containerinstances":{
       "Type":"AWS::AutoScaling::LaunchConfiguration",
-      "DependsOn": "cluster",
+      "DependsOn": ["cluster", "instanceprofile"],
       "Properties":{
         "ImageId":"ami-eca289fb",
         "InstanceType":"t2.micro",
@@ -247,11 +243,11 @@
     },
     "taskdefinition": {
       "Type" : "AWS::ECS::TaskDefinition",
-      "DependsOn": "cluster",
       "Properties" : {
+        "Family": "sqlapi",
         "ContainerDefinitions": [
           {
-            "Name": "sqlapi",
+            "Name": {"Fn::Join": ["", ["sqlapi", {"Ref": "Timestamp"}]] },
             "Cpu": 128,
             "Memory": 900,
             "Image" : "916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:latest",
@@ -264,12 +260,11 @@
     },
     "ecsService": {
       "Type" : "AWS::ECS::Service",
-      "DependsOn": "taskdefinition",
+      "DependsOn": ["cluster", "ecsServiceRole", "taskdefinition", "alblistenerrule"],
       "Properties" : {
         "Cluster" : {"Ref": "cluster"},
         "DesiredCount" : 1,
         "LaunchType" : "EC2",
-        "ServiceName" : "sqalpi",
         "Role": {"Ref": "ecsServiceRole"},
         "TaskDefinition" : {"Ref": "taskdefinition"},
         "DeploymentConfiguration": {
@@ -284,7 +279,7 @@
         ],
         "LoadBalancers": [
           {
-            "ContainerName": "sqlapi",
+            "ContainerName": {"Fn::Join": ["", ["sqlapi", {"Ref": "Timestamp"}]] },
             "ContainerPort": 80,
             "TargetGroupArn": { "Ref": "targetgroup" }
           }

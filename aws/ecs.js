@@ -3,7 +3,7 @@ const opt = require('../secrets/options'),
   { runStack } = require('./stackrunner')
 
 const Parameters = [
-  //{ ParameterKey: "Timestamp", ParameterValue: new Date().getTime().toString() }
+  { ParameterKey: "Timestamp", ParameterValue: new Date().getTime().toString() }
 ]
 
 const stackInfo = {
