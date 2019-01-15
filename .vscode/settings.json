@@ -1,5 +1,6 @@
 {
     "json.format.enable": false,
     "editor.detectIndentation": false,
-    "editor.tabSize": 2
+    "editor.tabSize": 2,
+    "yaml.format.enable": true
 }

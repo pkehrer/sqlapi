@@ -1,7 +1,6 @@
-const AWS = require('aws-sdk'),
+const cp = require('child_process'),
   _ = require('lodash'),
   opt = require('../secrets/options'),
-  cp = require('child_process'),
   { ecr } = require('./aws')
 
 

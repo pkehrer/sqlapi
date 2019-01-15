@@ -1,0 +1,8 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Deployment configuration for the sqlapi (ecr repo only)
+Resources:
+  repo:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: sqlapi

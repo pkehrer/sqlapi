@@ -1,5 +1,5 @@
 const { createOrUpdateStack, deleteStack } = require('./cloudformation'),
-  { updateConfig } = require('./aws'),
+  { setUserCredentials, ecr } = require('./aws'),
   stackInfo = require('./stackinfo')
 
 async function deleteEcrRepository() {
@@ -11,14 +11,13 @@ async function deleteEcrRepository() {
 
 
 async function run() {
-  updateConfig({ region: 'us-east-1' })
 
   const deploymentUserStack = await createOrUpdateStack(stackInfo.deploymentUser)
   setUserCredentials(deploymentUserStack)
 
   await deleteStack(stackInfo.db)
+  await deleteEcrRepository() // must be manually deleted before stack :(
   await deleteStack(stackInfo.ecr)
-  await deleteEcrRepository()
   await deleteStack(stackInfo.ecs)
   await deleteStack(stackInfo.deploymentUser)
 }

@@ -1,13 +1,11 @@
-const opt = require('../secrets/options'),
-  _ = require('lodash'),
-  fs = require('fs'),
+const fs = require('fs'),
   path = require('path'),
+  _ = require('lodash'),
+  { setUserCredentials } = require('./aws'),
   { createOrUpdateStack } = require('./cloudformation'),
-  { updateConfig, setUserCredentials } = require('./aws'),
-  stackInfo = require('./stackinfo'),
-  { dockerPush } = require('./docker')
-
-
+  { dockerPush } = require('./docker'),
+  opt = require('../secrets/options'),
+  stackInfo = require('./stackinfo')
 
 function setDbConnectionString(stack) {
   const server = _.find(stack.Outputs, o => o.OutputKey === 'dbaddress').OutputValue
@@ -17,9 +15,7 @@ function setDbConnectionString(stack) {
   fs.writeFileSync(dbConfigPath, JSON.stringify(configObj, null, 2))
 }
 
-async function run() {
-  updateConfig({ region: 'us-east-1' })
-
+(async function () {
   const deploymentUserStack = await createOrUpdateStack(stackInfo.deploymentUser)
   setUserCredentials(deploymentUserStack)
 
@@ -30,10 +26,7 @@ async function run() {
   await dockerPush()
 
   await createOrUpdateStack(stackInfo.ecs)
-}
-
-run()
-  .catch(error => {
-    console.log('*** ERROR ***')
-    console.log(error.toString())
-  })
+})().catch(error => {
+  console.log('*** ERROR ***')
+  console.log(error.toString())
+})

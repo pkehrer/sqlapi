@@ -1,10 +1,16 @@
 const { getImageRevision } = require('./docker'),
-  opt = require('../secrets/options')
+  opt = require('../secrets/options'),
+  yaml = require('js-yaml'),
+  fs = require('fs'),
+  path = require('path')
+
+const loadTemplate = name =>
+  yaml.safeLoad(fs.readFileSync(path.join(__dirname, `templates/${name}.yml`), 'utf8'))
 
 module.exports = {
   deploymentUser: {
     StackName: 'sqlapi-deploymentuser',
-    template: require('./templates/deploymentuser.json')
+    template: loadTemplate('deploymentuser')
   },
 
   db: {
@@ -13,12 +19,12 @@ module.exports = {
       { ParameterKey: "DBUsername", ParameterValue: opt.username },
       { ParameterKey: "DBPassword", ParameterValue: opt.password }
     ],
-    template: require('./templates/db.json')
+    template: loadTemplate('db')
   },
 
   ecr: {
     StackName: 'sqlapiecr',
-    template: require('./templates/ecr.json')
+    template: loadTemplate('ecr')
   },
 
   ecs: {
@@ -26,6 +32,6 @@ module.exports = {
     Parameters: [
       { ParameterKey: "ImageRevision", ParameterValue: getImageRevision().toString() }
     ],
-    template: require('./templates/ecs.json')
+    template: loadTemplate('ecs')
   }
 }

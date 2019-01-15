@@ -1,0 +1,247 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Deployment configuration for the sqlapi
+Parameters:
+  ImageRevision:
+    Type: String
+Resources:
+  ec2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:*
+                  - ecs:*
+                Resource: "*"
+  AutoscalingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - application-autoscaling.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - application-autoscaling:*
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:PutMetricAlarm
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
+                Resource: "*"
+  instanceprofile:
+    Type: AWS::IAM::InstanceProfile
+    DependsOn: ec2Role
+    Properties:
+      Roles:
+        - Ref: ec2Role
+  ecsServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+                  - elasticloadbalancing:DeregisterTargets
+                  - elasticloadbalancing:Describe*
+                  - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+                  - elasticloadbalancing:RegisterTargets
+                  - ec2:Describe*
+                  - ec2:AuthorizeSecurityGroupIngress
+                Resource: "*"
+  loadbalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      IpAddressType: ipv4
+      Scheme: internet-facing
+      SecurityGroups:
+        - sg-df106db9
+      Subnets:
+        - subnet-07dddf2c
+        - subnet-f5f46e90
+      Type: application
+  hostname:
+    Type: AWS::Route53::RecordSet
+    DependsOn: loadbalancer
+    Properties:
+      HostedZoneId: Z2FG1U6UOYE0RV
+      Name: sqlapi.pkehrer.click.
+      TTL: "0"
+      Type: CNAME
+      ResourceRecords:
+        - Fn::GetAtt:
+            - loadbalancer
+            - DNSName
+  targetgroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: "/livecheck"
+      HealthCheckPort: traffic-port
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      Matcher:
+        HttpCode: "204"
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "10"
+      TargetType: instance
+      UnhealthyThresholdCount: 2
+      VpcId: vpc-bf55d6db
+  alblistener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn:
+      - targetgroup
+      - loadbalancer
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: targetgroup
+      LoadBalancerArn:
+        Ref: loadbalancer
+      Port: "80"
+      Protocol: HTTP
+  alblistenerrule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    DependsOn:
+      - alblistener
+      - targetgroup
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn:
+            Ref: targetgroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - "/"
+      ListenerArn:
+        Ref: alblistener
+      Priority: 1
+  cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: sqlapi
+  containerinstances:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    DependsOn:
+      - cluster
+      - instanceprofile
+    Properties:
+      ImageId: ami-eca289fb
+      InstanceType: t2.micro
+      IamInstanceProfile:
+        Ref: instanceprofile
+      KeyName: sqlapi
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+            - ""
+            - [
+                "#!/bin/bash -xe\n",
+                "echo ECS_CLUSTER=",
+                Ref: cluster,
+                " >> /etc/ecs/ecs.config\n",
+                "yum install -y aws-cfn-bootstrap\n",
+                "/opt/aws/bin/cfn-signal -e $? --stack sqlapi --resource asg --region us-east-1\n",
+              ]
+  asg:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    DependsOn: containerinstances
+    Properties:
+      LaunchConfigurationName:
+        Ref: containerinstances
+      AvailabilityZones:
+        - us-east-1a
+      MinSize: 0
+      MaxSize: 2
+      DesiredCapacity: 1
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: true
+  taskdefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: sqlapi
+      ContainerDefinitions:
+        - Name: sqlapi
+          Cpu: 128
+          Memory: 900
+          Image:
+            Fn::Join:
+              - ""
+              - - "916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:"
+                - Ref: ImageRevision
+          PortMappings:
+            - ContainerPort: 80
+      Cpu: 150
+      Memory: 950
+  ecsService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - cluster
+      - ecsServiceRole
+      - taskdefinition
+      - alblistenerrule
+    Properties:
+      Cluster:
+        Ref: cluster
+      DesiredCount: 1
+      LaunchType: EC2
+      Role:
+        Ref: ecsServiceRole
+      TaskDefinition:
+        Ref: taskdefinition
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+      PlacementStrategies:
+        - Type: spread
+          Field: instanceId
+      LoadBalancers:
+        - ContainerName: sqlapi
+          ContainerPort: 80
+          TargetGroupArn:
+            Ref: targetgroup

@@ -8,15 +8,13 @@
       "type": "node",
       "request": "launch",
       "name": "aws delete",
-      "program": "${workspaceFolder}/aws/deploymentuser.js",
-      "args": ["delete"]
+      "program": "${workspaceFolder}/aws/delete.js"
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "aws create",
-      "program": "${workspaceFolder}/aws/deploymentuser.js",
-      "args": []
+      "name": "aws deploy",
+      "program": "${workspaceFolder}/aws/deploy.js",
     },
         {
             "name": ".NET Core Launch (web)",
