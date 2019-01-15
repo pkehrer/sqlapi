@@ -7,20 +7,9 @@
     "dotnet-publish": "dotnet publish -f netcoreapp2.2 -c Release",
     "docker-build": "docker build -t sqlapi .",
     "docker-runlocal": "docker run -p 8080:80 sqlapi:latest",
-    "deploy-deploymentuser": "node aws/deploymentuser",
-    "delete-deploymentuser": "node aws/deploymentuser delete",
-    "deploy-ecr": "node aws/ecr",
-    "delete-ecr": "node aws/ecr delete",
-    "deploy-ecs": "node aws/ecs",
-    "delete-ecs": "node aws/ecs delete",
-    "deploy-db": "node aws/db",
-    "delete-db": "node aws/db delete",
-
-    "update-app": "node aws/deploy",
-    "deploy": "run-s dotnet-publish docker-build deploy-ecr update-app",
-
-    "delete-all": "run-s  delete-ecs delete-ecr delete-db delete-deploymentuser",
-    "deploy-all": "run-s dotnet-publish docker-build deploy-deploymentuser deploy-ecr deploy-db deploy-ecs"
+    "deploy-aws": "node aws/deploy",
+    "deploy": "run-s dotnet-publish docker-build deploy-aws",
+    "delete-aws": "node aws/delete"
   },
   "dependencies": {
     "async-polling": "^0.2.1",

@@ -54,7 +54,7 @@ async function updateStack({ StackName, Parameters, template }) {
   await cloudformation().updateStack({
     StackName,
     Tags: [{ Key: 'Project', Value: 'sqlapi' }],
-    Parameters,
+    Parameters: Parameters || [],
     Capabilities: ['CAPABILITY_NAMED_IAM'],
     TemplateBody: JSON.stringify(template)
   }).promise()
@@ -65,7 +65,7 @@ async function createStack({ StackName, Parameters, template }) {
   await cloudformation().createStack({
     StackName,
     OnFailure: 'DELETE',
-    Parameters,
+    Parameters: Parameters || [],
     Tags: [{ Key: 'Project', Value: 'sqlapi' }],
     Capabilities: ['CAPABILITY_NAMED_IAM'],
     TemplateBody: JSON.stringify(template)
