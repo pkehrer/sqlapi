@@ -1,36 +1,46 @@
-const { getImageRevision } = require('./docker'),
-  opt = require('../secrets/options'),
+const { getImageRevision } = require('./system'),
   yaml = require('js-yaml'),
   fs = require('fs'),
-  path = require('path')
+  path = require('path'),
+  { project } = require('./config')
 
 const loadTemplate = name =>
   yaml.safeLoad(fs.readFileSync(path.join(__dirname, `templates/${name}.yml`), 'utf8'))
 
+function randString(length) {
+  const next = () => Math.random().toString(36).substr(2)
+  let s = next()
+  while (s.length < length) {
+    s += next()
+  }
+  return s.substr(0, length)
+}
+
 module.exports = {
   deploymentUser: {
-    StackName: 'sqlapi-deploymentuser',
+    StackName: `${project}-deploymentuser`,
     template: loadTemplate('deploymentuser')
   },
 
   db: {
-    StackName: 'sqlapidb',
+    StackName: `${project}-db`,
     Parameters: [
-      { ParameterKey: "DBUsername", ParameterValue: opt.username },
-      { ParameterKey: "DBPassword", ParameterValue: opt.password }
+      { ParameterKey: "DBUsername", ParameterValue: "u" + randString(23) },
+      { ParameterKey: "DBPassword", ParameterValue: randString(24) }
     ],
     template: loadTemplate('db')
   },
 
   ecr: {
-    StackName: 'sqlapiecr',
+    StackName: `${project}-ecr`,
     template: loadTemplate('ecr')
   },
 
   ecs: {
-    StackName: 'sqlapi',
+    StackName: project,
     Parameters: [
-      { ParameterKey: "ImageRevision", ParameterValue: getImageRevision().toString() }
+      { ParameterKey: "ImageRevision", ParameterValue: getImageRevision().toString() },
+      { ParameterKey: "StackName", ParameterValue: project }
     ],
     template: loadTemplate('ecs')
   }

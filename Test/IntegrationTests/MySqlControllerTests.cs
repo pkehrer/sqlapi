@@ -22,19 +22,19 @@ namespace Service.IntegrationTests
         {
             _output = output;
 
-            var builder = new WebHostBuilder()
-                .UseStartup<Startup>()
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseConfiguration(new ConfigurationBuilder()
-                    .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("db.json")
-                    .Build());
-            var server = new TestServer(builder);
-            _client = server.CreateClient();
-            //_client = new HttpClient
-            //{
-            //    BaseAddress = new Uri("http://sqlapi.pkehrer.click")
-            //};
+            //var builder = new WebHostBuilder()
+            //    .UseStartup<Startup>()
+            //    .UseContentRoot(Directory.GetCurrentDirectory())
+            //    .UseConfiguration(new ConfigurationBuilder()
+            //        .SetBasePath(Directory.GetCurrentDirectory())
+            //        .AddJsonFile("db.json")
+            //        .Build());
+            //var server = new TestServer(builder);
+            //_client = server.CreateClient();
+            _client = new HttpClient
+            {
+                BaseAddress = new Uri("http://sqlapi.pkehrer.click")
+            };
 
             _getRunner = () => SqlRunner.Create(_client, output);
         }

@@ -4,6 +4,8 @@ Description: Deployment configuration for the sqlapi
 Parameters:
   ImageRevision:
     Type: String
+  StackName:
+    Type: String
 Resources:
   ec2Role:
     Type: AWS::IAM::Role
@@ -100,8 +102,12 @@ Resources:
     DependsOn: loadbalancer
     Properties:
       HostedZoneId: Z2FG1U6UOYE0RV
-      Name: sqlapi.pkehrer.click.
-      TTL: "0"
+      Name:
+        Fn::Join:
+          - ""
+          - - Ref: StackName
+            - .pkehrer.click.
+      TTL: 0
       Type: CNAME
       ResourceRecords:
         - Fn::GetAtt:
@@ -117,12 +123,12 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 5
       Matcher:
-        HttpCode: "204"
+        HttpCode: 204
       Port: 80
       Protocol: HTTP
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
-          Value: "10"
+          Value: 10
       TargetType: instance
       UnhealthyThresholdCount: 2
       VpcId: vpc-bf55d6db
@@ -160,7 +166,8 @@ Resources:
   cluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: sqlapi
+      ClusterName:
+        Ref: StackName
   containerinstances:
     Type: AWS::AutoScaling::LaunchConfiguration
     DependsOn:
@@ -176,14 +183,14 @@ Resources:
         Fn::Base64:
           Fn::Join:
             - ""
-            - [
-                "#!/bin/bash -xe\n",
-                "echo ECS_CLUSTER=",
-                Ref: cluster,
-                " >> /etc/ecs/ecs.config\n",
-                "yum install -y aws-cfn-bootstrap\n",
-                "/opt/aws/bin/cfn-signal -e $? --stack sqlapi --resource asg --region us-east-1\n",
-              ]
+            - - "#!/bin/bash -xe\n"
+              - "echo ECS_CLUSTER="
+              - Ref: cluster
+              - " >> /etc/ecs/ecs.config\n"
+              - "yum install -y aws-cfn-bootstrap\n"
+              - "/opt/aws/bin/cfn-signal -e $? --stack "
+              - Ref: StackName
+              - " --resource asg --region us-east-1\n"
   asg:
     Type: AWS::AutoScaling::AutoScalingGroup
     DependsOn: containerinstances
@@ -204,15 +211,19 @@ Resources:
   taskdefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: sqlapi
+      Family:
+        Ref: StackName
       ContainerDefinitions:
-        - Name: sqlapi
+        - Name:
+            Ref: StackName
           Cpu: 128
           Memory: 900
           Image:
             Fn::Join:
               - ""
-              - - "916437080264.dkr.ecr.us-east-1.amazonaws.com/sqlapi:"
+              - - "916437080264.dkr.ecr.us-east-1.amazonaws.com/"
+                - Ref: StackName
+                - ":"
                 - Ref: ImageRevision
           PortMappings:
             - ContainerPort: 80
@@ -241,7 +252,8 @@ Resources:
         - Type: spread
           Field: instanceId
       LoadBalancers:
-        - ContainerName: sqlapi
+        - ContainerName:
+            Ref: StackName
           ContainerPort: 80
           TargetGroupArn:
             Ref: targetgroup

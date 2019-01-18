@@ -8,7 +8,7 @@
     "docker-build": "docker build -t sqlapi .",
     "docker-runlocal": "docker run -p 8080:80 sqlapi:latest",
     "deploy-aws": "node aws/deploy",
-    "deploy": "run-s dotnet-publish docker-build deploy-aws",
+    "deploy": "run-s dotnet-publish deploy-aws",
     "delete-aws": "node aws/delete"
   },
   "dependencies": {
