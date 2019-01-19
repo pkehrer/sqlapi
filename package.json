@@ -7,9 +7,8 @@
     "dotnet-publish": "dotnet publish -f netcoreapp2.2 -c Release",
     "docker-build": "docker build -t sqlapi .",
     "docker-runlocal": "docker run -p 8080:80 sqlapi:latest",
-    "deploy-aws": "node aws/deploy",
-    "deploy": "run-s dotnet-publish deploy-aws",
-    "delete-aws": "node aws/delete"
+    "deploy": "node aws/deploy",
+    "delete": "node aws/delete"
   },
   "dependencies": {
     "async-polling": "^0.2.1",

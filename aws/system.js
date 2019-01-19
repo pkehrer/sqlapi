@@ -13,10 +13,16 @@ async function dockerBuild() {
 }
 
 async function dotnetPublish() {
-  system('dotnet publish -f netcoreapp2.2 -c Release', root)
+  const command = 'dotnet publish -f netcoreapp2.2 -c Release'
+  try {
+    system(command, root)
+  } catch (error) {
+    console.log("retrying...")
+    system(command, root)
+  }
 }
 
-function system(command, opts) {
+function system(command, opts = { cwd: null }) {
   console.log("running command: " + command)
   const output = cp.execSync(command, { stdio: ['ignore', 'pipe', 'ignore'], cwd: opts.cwd })
   console.log(output.toString())

@@ -9,14 +9,16 @@ const fs = require('fs'),
   stackInfo = require('./stackinfo')
 
 function setDbConnectionString(stack) {
-  const server = _.find(stack.Outputs, o => o.OutputKey === 'dbaddress').OutputValue
-  const dotnetConfig = {
-    Server: server,
-    Username: opt.username,
-    Password: opt.password,
-    Database: project
+  const Server = _.find(stack.Outputs, o => o.OutputKey === 'dbaddress').OutputValue
+  const Username = _.find(stack.Parameters, p => p.ParameterKey === 'DBUsername').ParameterValue
+  const Password = _.find(stack.Parameters, p => p.ParameterKey === 'DBPassword').ParameterValue
+
+  const configObj = {
+    DbConnectionConfig: {
+      Server, Username, Password, Database: project
+    }
   }
-  const configObj = { DbConnectionConfig: dotnetConfig }
+
   const dbConfigPath = path.join(__dirname, '../secrets/db.json')
   fs.writeFileSync(dbConfigPath, JSON.stringify(configObj, null, 2))
 }
@@ -32,12 +34,15 @@ function sleep(sec) {
 
   if (!deploymentUserStack) {
     deploymentUserStack = await createOrUpdateStack(stackInfo.deploymentUser)
-    sleep(15)
+    await sleep(15)
   }
 
   setUserCredentials(deploymentUserStack)
 
-  const dbStack = await createOrUpdateStack(stackInfo.db)
+  let dbStack = await getStack(stackInfo.db)
+  if (!dbStack) {
+    dbStack = await createOrUpdateStack(stackInfo.db)
+  }
   setDbConnectionString(dbStack)
   await createOrUpdateStack(stackInfo.ecr)
 

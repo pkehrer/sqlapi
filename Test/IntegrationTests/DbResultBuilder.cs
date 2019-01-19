@@ -1,4 +1,5 @@
-﻿using Service.Models;
+﻿using Core.Models;
+using Service.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -25,7 +25,7 @@ module.exports = {
   db: {
     StackName: `${project}-db`,
     Parameters: [
-      { ParameterKey: "DBUsername", ParameterValue: "u" + randString(23) },
+      { ParameterKey: "DBUsername", ParameterValue: "u" + randString(7) },
       { ParameterKey: "DBPassword", ParameterValue: randString(24) }
     ],
     template: loadTemplate('db')

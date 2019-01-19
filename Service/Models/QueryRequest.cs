@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Service.Models
+namespace Core.Models
 {
     public class QueryRequest
     {

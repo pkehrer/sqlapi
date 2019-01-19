@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Core;
+using Core.Models;
+using Microsoft.Extensions.Options;
 using MySql.Data.MySqlClient;
 using Service.Models;
 using System;

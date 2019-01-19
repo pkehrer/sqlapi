@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Service.Services;
 using Service.Models;
+using Core.Models;
 
 namespace Service.Controllers
 {

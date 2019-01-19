@@ -1,6 +1,7 @@
 const _ = require('lodash'),
   { ecr } = require('./aws'),
-  { system, getImageRevision } = require('./system')
+  { system, getImageRevision } = require('./system'),
+  { project } = require('./config')
 
 async function getLoginCommand(extra = "") {
   const response = await ecr().getAuthorizationToken({}).promise()

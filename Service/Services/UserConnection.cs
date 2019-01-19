@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using Core;
+using MySql.Data.MySqlClient;
 using Service.Models;
 using System;
 using System.Collections.Generic;
