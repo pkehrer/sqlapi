@@ -18,21 +18,41 @@ namespace AdminDataPopulator
 
         public async Task Create(CsvFile file)
         {
+            //await _conn.RunAdminQuery("SET GLOBAL max_allowed_packet=1073741824;");
             _sql = new SqlGenerator();
 
             Console.WriteLine($"Creating table {file.Name}");
             var createSql = await _sql.Create(file);
             await _conn.RunAdminQuery(createSql);
 
+            const int insertBatchSize = 5;
+
+            var rowsCreated = 0;
             using (var headerReader = file.Header())
             {
                 var header = await headerReader.GetHeader();
                 using (var rowReader = file.Rows(header.Count))
                 {
-                    while (await _sql.ReadInsertAsync(file.Name, headerReader, rowReader))
+                    var rowsReturned = await _sql.ReadInsertAsync(file.Name, headerReader, rowReader);
+                    var inserts = new List<string>();
+                    while (rowsReturned > 0)
                     {
                         var insert = _sql.GetInsert();
-                        await _conn.RunAdminQuery(insert);
+                        if (inserts.Count >= insertBatchSize)
+                        {
+                            await _conn.RunAdminQuery(string.Join("\n", inserts));
+                            Console.WriteLine($"Created {rowsCreated} rows...");
+                            inserts = new List<string>();
+                        }
+                        inserts.Add(insert);
+                        rowsCreated += rowsReturned;
+                        rowsReturned = await _sql.ReadInsertAsync(file.Name, headerReader, rowReader);
+                    }
+
+                    if (inserts.Count > 0)
+                    {
+                        await _conn.RunAdminQuery(string.Join("\n", inserts));
+                        Console.WriteLine($"Created {rowsCreated} rows...");
                     }
                 }
             }

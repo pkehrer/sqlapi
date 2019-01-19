@@ -22,6 +22,7 @@ namespace Service
             services.Configure<DbConnectionConfig>(configuration.GetSection("DbConnectionConfig"));
             services.AddSingleton<UserConnectionManager>();
             services.AddSingleton<AdminConnection>();
+            services.AddSingleton<SchemaService>();
             services.AddSingleton<QueryParser>();
         }
     }

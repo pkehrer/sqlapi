@@ -28,7 +28,7 @@ namespace AdminDataPopulator
             return $"DROP TABLE {file.Name};";
         }
 
-        public async Task<bool> ReadInsertAsync(
+        public async Task<int> ReadInsertAsync(
             string name,
             CsvFileHeaderLoader headerReader,
             CsvFileRowLoader rowReader)
@@ -44,15 +44,15 @@ namespace AdminDataPopulator
                 else if (_currentRows.Count > 0)
                 {
                     LoadInsert(name);
-                    return true;
+                    return _currentRows.Count;
                 } else
                 {
                     _currentRows = null;
-                    return false;
+                    return 0;
                 }
             }
             LoadInsert(name);
-            return true;
+            return _currentRows.Count;
         }
 
         private void LoadInsert(string name)

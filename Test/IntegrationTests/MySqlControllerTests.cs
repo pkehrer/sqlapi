@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Service.Models;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -32,6 +33,7 @@ namespace Service.IntegrationTests
             //        .Build());
             //var server = new TestServer(builder);
             //_client = server.CreateClient();
+
             _client = new HttpClient
             {
                 BaseAddress = new Uri("http://sqlapi.pkehrer.click")
@@ -100,6 +102,20 @@ namespace Service.IntegrationTests
                 showRes.ResultSets[0].Result.AssertEquivalentTo(res1);
                 showRes.ResultSets[1].Result.AssertEquivalentTo(res2);
             }
+        }
+
+        [Fact]
+        public async Task GetSchema()
+        {
+            var response = await _client.GetAsync("/schema");
+            var schema = await response.Content.ReadAsAsync<IList<TableDefinition>>();
+            foreach (var table in schema)
+            {
+                _output.WriteLine(table.ToString());
+                _output.WriteLine(string.Empty);
+            }
+            
+            Assert.True(true);
         }
     }
 }
