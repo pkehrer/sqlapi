@@ -64,7 +64,7 @@ async function createStack({ StackName, Parameters, template }) {
   console.log(`Creating stack ${StackName}...`)
   await cloudformation().createStack({
     StackName,
-    OnFailure: 'DELETE',
+    OnFailure: 'DO_NOTHING',
     Parameters: Parameters || [],
     Tags: [{ Key: 'Project', Value: 'sqlapi' }],
     Capabilities: ['CAPABILITY_NAMED_IAM'],

@@ -36,7 +36,7 @@ namespace Service.IntegrationTests
 
             _client = new HttpClient
             {
-                BaseAddress = new Uri("http://sqlapi.pkehrer.click")
+                BaseAddress = new Uri("https://sqlapi.pkehrer.click")
             };
 
             _getRunner = () => SqlRunner.Create(_client, output);

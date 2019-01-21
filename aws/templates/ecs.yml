@@ -138,14 +138,16 @@ Resources:
       - targetgroup
       - loadbalancer
     Properties:
+      Certificates:
+        - CertificateArn: "arn:aws:acm:us-east-1:916437080264:certificate/0516bd4e-1e2a-4de0-8e3b-d54bb39aa3fa"
       DefaultActions:
         - Type: forward
           TargetGroupArn:
             Ref: targetgroup
       LoadBalancerArn:
         Ref: loadbalancer
-      Port: "80"
-      Protocol: HTTP
+      Port: 443
+      Protocol: HTTPS
   alblistenerrule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     DependsOn:
