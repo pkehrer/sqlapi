@@ -24,20 +24,20 @@ namespace Service.IntegrationTests
         {
             _output = output;
 
-            //var builder = new WebHostBuilder()
-            //    .UseStartup<Startup>()
-            //    .UseContentRoot(Directory.GetCurrentDirectory())
-            //    .UseConfiguration(new ConfigurationBuilder()
-            //        .SetBasePath(Directory.GetCurrentDirectory())
-            //        .AddJsonFile("db.json")
-            //        .Build());
-            //var server = new TestServer(builder);
-            //_client = server.CreateClient();
+            var builder = new WebHostBuilder()
+                .UseStartup<Startup>()
+                .UseContentRoot(Directory.GetCurrentDirectory())
+                .UseConfiguration(new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("db.json")
+                    .Build());
+            var server = new TestServer(builder);
+            _client = server.CreateClient();
 
-            _client = new HttpClient
-            {
-                BaseAddress = new Uri("https://sqlapi.pkehrer.click")
-            };
+            //_client = new HttpClient
+            //{
+            //    BaseAddress = new Uri("https://sqlapi.pkehrer.click")
+            //};
 
             _getRunner = () => SqlRunner.Create(_client, output);
         }
@@ -60,7 +60,18 @@ namespace Service.IntegrationTests
                     .AddRow((Int64)2, "Kristen", (Int64)36));
             }
         }
-        
+
+        //[Fact]
+        //public async Task TestViews()
+        //{
+        //    using (var r = await _getRunner())
+        //    {
+        //        await r.Run("delete from billedservices;");
+
+        //        Assert.True(true);
+        //    }
+        //}
+
         [Fact]
         public async Task ShowTables()
         {
