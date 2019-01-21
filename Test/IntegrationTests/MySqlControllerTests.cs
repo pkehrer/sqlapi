@@ -57,7 +57,8 @@ namespace Service.IntegrationTests
                     .AssertEquivalentTo(new DbResult()
                     .SetColumnNames("id", "name", "age")
                     .AddRow((Int64)1, "Paul", (Int64)32)
-                    .AddRow((Int64)2, "Kristen", (Int64)36));
+                    .AddRow((Int64)2, "Kristen", (Int64)36)
+                    .SetRowCount(2));
             }
         }
 
@@ -82,7 +83,8 @@ namespace Service.IntegrationTests
                 var showRes = await r.Run("show tables;");
                 var expectedResult = DbResultBuilder.Create()
                     .AddRow("table1")
-                    .AddRow("table2");
+                    .AddRow("table2")
+                    .SetRowCount(2);
                 showRes.ResultSets.First()
                     .Result.Rows
                     .AssertEquivalentTo(expectedResult.Rows);
@@ -104,11 +106,13 @@ namespace Service.IntegrationTests
                 var res1 = new DbResult()
                     .SetColumnNames("id")
                     .AddRow((Int64)1)
-                    .AddRow((Int64)2);
+                    .AddRow((Int64)2)
+                    .SetRowCount(2);
                 var res2 = new DbResult()
                     .SetColumnNames("name")
                     .AddRow("Paul")
-                    .AddRow("Kristen");
+                    .AddRow("Kristen")
+                    .SetRowCount(2);
 
                 showRes.ResultSets[0].Result.AssertEquivalentTo(res1);
                 showRes.ResultSets[1].Result.AssertEquivalentTo(res2);

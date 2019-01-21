@@ -10,6 +10,8 @@ namespace Core
 {
     public class QueryRunner
     {
+        const int MAX_ROWS_RETURNED = 20000;
+
         private readonly MySqlConnection _sourceConnection;
 
         public QueryRunner(MySqlConnection sourceConnection)
@@ -25,6 +27,7 @@ namespace Core
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     var rows = new List<List<object>>();
+                    long rowCount = 0;
                     while (await reader.ReadAsync())
                     {
                         var row = new List<object>();
@@ -34,14 +37,19 @@ namespace Core
                             AddColumnNames(result, reader);
                         }
 
-                        for (var i = 0; i < reader.FieldCount; i++)
+                        if (rows.Count < MAX_ROWS_RETURNED)
                         {
-                            var value = reader.GetValue(i);
-                            row.Add(value);
+                            for (var i = 0; i < reader.FieldCount; i++)
+                            {
+                                var value = reader.GetValue(i);
+                                row.Add(value);
+                            }
+                            rows.Add(row);
                         }
-                        rows.Add(row);
+                        rowCount++;
                     }
                     result.Rows = rows.Select(r => r.ToArray()).ToArray();
+                    result.RowCount = rowCount;
                 }
             } catch (Exception e)
             {

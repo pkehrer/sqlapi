@@ -12,6 +12,7 @@ namespace Core.Models
 
         public string[] ColumnNames { get; set; }
         public object[][] Rows { get; set; }
+        public long RowCount { get; set; }
 
         public override string ToString()
         {
@@ -21,8 +22,7 @@ namespace Core.Models
                 return emptyResponse + Environment.NewLine;
             }
 
-            var s = string.Join('\t', ColumnNames);
-            s += Environment.NewLine;
+            var s = string.Join('\t', ColumnNames) + "Rows: " + RowCount + Environment.NewLine;
             foreach (var row in Rows)
             {
                 s += string.Join('\t', row);

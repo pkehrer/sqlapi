@@ -25,5 +25,11 @@ namespace Service.IntegrationTests
                 .ToArray();
             return result;
         }
+
+        public static DbResult SetRowCount(this DbResult result, long rowCount)
+        {
+            result.RowCount = rowCount;
+            return result;
+        }
     }
 }
