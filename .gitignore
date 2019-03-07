@@ -1,6 +1,7 @@
 node_modules/
 **/bin/
 **/obj/
-secrets/
+secrets/*
+!secrets/.gitkeep
 .vs/
 .idea/
