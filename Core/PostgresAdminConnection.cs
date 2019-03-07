@@ -44,22 +44,18 @@ namespace Core
                 connection.Open();
                 var runner = new PostgresQueryRunner(connection);
                 await runner.RunQuery($"CREATE SCHEMA S{config.UserDatabase};");
-                await runner.RunQuery($"CREATE USER {config.Username} WITH PASSWORD '{config.Password}';");
+                await runner.RunQuery($"CREATE USER \"{config.Username}\" WITH PASSWORD '{config.Password}';");
                 await runner.RunQuery(
-                    $@"GRANT ALL PRIVILEGES 
-                    ON SCHEMA S{config.UserDatabase}
-                    TO {config.Username}");
+                    $"GRANT ALL PRIVILEGES ON SCHEMA S{config.UserDatabase} TO \"{config.Username}\"");
                 await runner.RunQuery(
-                    $@"GRANT CONNECT
-                    ON DATABASE {_config.Database}
-                    TO {config.Username}");
+                    $"GRANT CONNECT ON DATABASE {_config.Database} TO \"{config.Username}\"");
                 
                 foreach (var table in tableNames)
                 {
                     await runner.RunQuery(
                         $@"CREATE OR REPLACE VIEW S{config.UserDatabase}.{table} AS SELECT * FROM public.{table};");
                     await runner.RunQuery(
-                        $@"GRANT SELECT ON S{config.UserDatabase}.{table} to {config.Username}");
+                        $"GRANT SELECT ON S{config.UserDatabase}.{table} to \"{config.Username}\"");
                 }
             }
         }
@@ -71,15 +67,15 @@ namespace Core
             {
                 connection.Open();
                 var runner = new PostgresQueryRunner(connection);
-                await runner.RunQuery($"REVOKE ALL PRIVILEGES ON SCHEMA S{config.UserDatabase} FROM {config.Username}");
-                await runner.RunQuery($"REVOKE ALL PRIVILEGES ON DATABASE {_config.Database} FROM {config.Username}");
+                await runner.RunQuery($"REVOKE ALL PRIVILEGES ON SCHEMA S{config.UserDatabase} FROM \"{config.Username}\"");
+                await runner.RunQuery($"REVOKE ALL PRIVILEGES ON DATABASE {_config.Database} FROM \"{config.Username}\"");
                 foreach (var table in tableNames)
                 {
-                    await runner.RunQuery($"REVOKE ALL PRIVILEGES ON S{config.UserDatabase}.{table} FROM {config.Username}");
+                    await runner.RunQuery($"REVOKE ALL PRIVILEGES ON S{config.UserDatabase}.{table} FROM \"{config.Username}\"");
                 }
 
                 await runner.RunQuery($"DROP SCHEMA S{config.UserDatabase} CASCADE;");
-                await runner.RunQuery($"DROP USER IF EXISTS {config.Username};");
+                await runner.RunQuery($"DROP USER IF EXISTS \"{config.Username}\";");
             }
         }
     }

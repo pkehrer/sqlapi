@@ -23,6 +23,6 @@ namespace Core
         
         private string BuildConnectionString(UserConfiguration user) =>
             $"Server={_config.Server};User ID={user.Username};Password={user.Password};Database={_config.Database};" +
-            $"Search Path={user.UserDatabase}";
+            $"Search Path=S{user.UserDatabase}";
     }
 }

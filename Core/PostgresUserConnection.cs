@@ -6,6 +6,7 @@ namespace Core
     public class PostgresUserConnection : UserConnection
     {
         private readonly NpgsqlConnection _dbConnection;
+        private Task _dbConnectionTask;
 
         public PostgresUserConnection(NpgsqlConnection dbConnection, QueryParser queryParser)
             : base(queryParser)
@@ -15,9 +16,9 @@ namespace Core
         
         protected override Task OpenConnection()
         {
-            _dbConnection.Open();
-            return Task.CompletedTask;
+            return _dbConnectionTask ?? (_dbConnectionTask = Task.Run(() => _dbConnection.Open()));
         }
+
         
         public override Task CloseAsync()
         {
