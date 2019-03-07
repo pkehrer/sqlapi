@@ -7,32 +7,33 @@ using System.Threading.Tasks;
 
 namespace Core
 {
-    public class AdminConnection
+    public class MysqlAdminConnection : IAdminConnection
     {
         private readonly DbConnectionConfig _config;
 
-        public AdminConnection(IOptions<DbConnectionConfig> config)
+        public MysqlAdminConnection(IOptions<DbConnectionConfig> config)
         {
             _config = config.Value;
         }
-        private string ConnectionString =>
-            $"Server={_config.Server};User ID={_config.Username};Password={_config.Password};Database={_config.Database}";
+
+        public string ConnectionString =>
+            $"Host={_config.Server};Username={_config.Username};Password={_config.Password};Database={_config.Database}";
 
         public async Task<DbResult> RunAdminQuery(string query)
         {
             var connection = new MySqlConnection(ConnectionString);
             await connection.OpenAsync();
-            var runner = new QueryRunner(connection);
+            var runner = new MysqlQueryRunner(connection);
             var result = await runner.RunQuery(query);
             await connection.CloseAsync();
             return result;
         }
 
-        private async Task<List<string>> TableNames()
+        public async Task<List<string>> TableNames(string owner = null)
         {
             var connection = new MySqlConnection(ConnectionString);
             await connection.OpenAsync();
-            var runner = new QueryRunner(connection);
+            var runner = new MysqlQueryRunner(connection);
             var result = await runner.RunQuery("SHOW TABLES;");
             await connection.CloseAsync();
             return result.Rows.Select(r => r[0].ToString()).ToList();
@@ -43,7 +44,7 @@ namespace Core
             var tableNames = await TableNames();
             var connection = new MySqlConnection(ConnectionString);
             await connection.OpenAsync();
-            var runner = new QueryRunner(connection);
+            var runner = new MysqlQueryRunner(connection);
             await runner.RunQuery($"CREATE DATABASE {config.UserDatabase};");
             await runner.RunQuery($"CREATE USER '{config.Username}'@'%' IDENTIFIED BY '{config.Password}'");
             await runner.RunQuery(
@@ -64,7 +65,7 @@ VIEW {config.UserDatabase}.{table} AS SELECT * FROM {table};");
         {
             var connection = new MySqlConnection(ConnectionString);
             await connection.OpenAsync();
-            var runner = new QueryRunner(connection);
+            var runner = new MysqlQueryRunner(connection);
             await runner.RunQuery($"REVOKE ALL PRIVILEGES, GRANT OPTION FROM '{config.Username}'@'%';");
             await runner.RunQuery($"DROP USER '{config.Username}'@'%';");
             await runner.RunQuery($"DROP DATABASE {config.UserDatabase};");

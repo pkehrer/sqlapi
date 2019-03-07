@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace Core
 {
-    public class QueryRunner
+    public class MysqlQueryRunner : IQueryRunner
     {
-        const int MAX_ROWS_RETURNED = 20000;
+        const int MaxRowsReturned = 20000;
 
         private readonly MySqlConnection _sourceConnection;
 
-        public QueryRunner(MySqlConnection sourceConnection)
+        public MysqlQueryRunner(MySqlConnection sourceConnection)
         {
             _sourceConnection = sourceConnection;
         }
@@ -37,7 +37,7 @@ namespace Core
                             AddColumnNames(result, reader);
                         }
 
-                        if (rows.Count < MAX_ROWS_RETURNED)
+                        if (rows.Count < MaxRowsReturned)
                         {
                             for (var i = 0; i < reader.FieldCount; i++)
                             {

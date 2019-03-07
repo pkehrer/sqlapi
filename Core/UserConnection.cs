@@ -1,40 +1,29 @@
-﻿using Core;
-using MySql.Data.MySqlClient;
-using Service.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Core.Models;
 
-namespace Service.Services
+namespace Core
 {
-    public class UserConnection
+    public abstract class UserConnection : IUserConnection
     {
-        private readonly MySqlConnection _dbConnection;
         private readonly QueryParser _queryParser;
-        private Task _dbConnectionTask;
-
-        public UserConnection(MySqlConnection dbConnection, QueryParser queryParser)
+        
+        protected UserConnection(QueryParser parser)
         {
-            _dbConnection = dbConnection;
-            _queryParser = queryParser;
+            _queryParser = parser;
         }
-
-        private Task DbConnection
-        {
-            get
-            {
-                if (_dbConnectionTask == null)
-                {
-                    _dbConnectionTask = _dbConnection.OpenAsync();
-                }
-                return _dbConnectionTask;
-            }
-        }
+        
+        public abstract Task CloseAsync();
+        
+        protected abstract Task OpenConnection();
+        
+        protected abstract IQueryRunner QueryRunner { get; }
         
         public async Task<QueryResponse> RunQuery(string query)
         {
-            await DbConnection;
-            var runner = new QueryRunner(_dbConnection);
+            await OpenConnection();
+            var runner = QueryRunner;
             
             var response = new QueryResponse
             {
@@ -64,6 +53,7 @@ namespace Service.Services
                     {
                         resultSet.ErrorMessage = e.ToString();
                         resultSet.Status = ResultSetStatus.Failure;
+                        failure = true;
                     }
                 }
 
@@ -71,11 +61,6 @@ namespace Service.Services
             }
 
             return response;
-        }
-
-        public async Task CloseAsync()
-        {
-            await _dbConnection.CloseAsync();
         }
     }
 }

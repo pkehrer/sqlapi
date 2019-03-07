@@ -7,7 +7,7 @@ namespace AdminDataPopulator
 {
     class SqlGenerator
     {
-        const int MYSQL_MAX_PLACEHOLDERS = 65535;
+        const int MysqlMaxPlaceholders = 65535;
 
         private IList<IList<object>> _currentRows;
         private string _currentInsert;
@@ -19,7 +19,7 @@ namespace AdminDataPopulator
             set
             {
                 _header = value;
-                _insertBatchSize = (MYSQL_MAX_PLACEHOLDERS - 100) / value.Count;
+                _insertBatchSize = (MysqlMaxPlaceholders - 100) / value.Count;
             }
         }
 

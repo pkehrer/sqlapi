@@ -1,18 +1,16 @@
 ﻿using Core.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Core
 {
     public class SchemaService
     {
-        readonly AdminConnection _conn;
+        readonly IAdminConnection _conn;
         private IList<TableDefinition> _cachedSchema;
 
-        public SchemaService(AdminConnection conn)
+        public SchemaService(IAdminConnection conn)
         {
             _conn = conn;
         }

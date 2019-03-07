@@ -1,6 +1,4 @@
-﻿using Core.Models;
-
-namespace Service.Models
+﻿namespace Core.Models
 {
     public class QueryResponseResultSet
     {

@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+// ReSharper disable ClassNeverInstantiated.Global
 
 namespace AdminDataPopulator
 {
@@ -13,17 +14,17 @@ namespace AdminDataPopulator
         public static void Main(string[] args)
         {
             var config = new ConfigurationBuilder().AddJsonFile("db.json").Build();
-            var dbconfig = config.GetSection("DbConnectionConfig").Get<DbConnectionConfig>();
+            var dbConfig = config.GetSection("DbConnectionConfig").Get<DbConnectionConfig>();
 
-            var conn = new AdminConnection(Options.Create(dbconfig));
+            var conn = new MysqlAdminConnection(Options.Create(dbConfig));
             var tablePopulator = new TablePopulator(conn);
 
-            Run(tablePopulator, args).Wait();
+            Run(tablePopulator).Wait();
 
             Console.ReadKey();
         }
 
-        async static Task Run(TablePopulator tablePopulator, string[] args)
+        private static async Task Run(TablePopulator tablePopulator)
         {
             try
             {

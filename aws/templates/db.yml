@@ -15,7 +15,7 @@ Resources:
       DBInstanceClass: db.t2.micro
       DBInstanceIdentifier: sqlapiServer
       DBName: sqlapi
-      Engine: mysql
+      Engine: postgres
       MasterUsername:
         Ref: DBUsername
       MasterUserPassword:

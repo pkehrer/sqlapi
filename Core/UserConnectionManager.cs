@@ -1,34 +1,26 @@
-﻿using Core;
-using Core.Models;
-using Microsoft.Extensions.Options;
-using MySql.Data.MySqlClient;
-using Service.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Core.Models;
 
-namespace Service.Services
+namespace Core
 {
     public class UserConnectionManager
     {
-        private readonly DbConnectionConfig _config;
-        private readonly AdminConnection _adminConnection;
-        private readonly QueryParser _queryParser;
-        private readonly IDictionary<string, Tuple<UserConnection, UserConfiguration>> _openConnections
-            = new Dictionary<string, Tuple<UserConnection, UserConfiguration>>();
+        private readonly IConnectionFactory _connectionFactory;
+        
+        private readonly IAdminConnection _adminConnection;
+        
+        private readonly IDictionary<string, Tuple<IUserConnection, UserConfiguration>> _openConnections
+            = new Dictionary<string, Tuple<IUserConnection, UserConfiguration>>();
 
         public UserConnectionManager(
-            IOptions<DbConnectionConfig> config,
-            AdminConnection adminConnection,
-            QueryParser queryParser)
+            IConnectionFactory connectionFactory,
+            IAdminConnection adminConnection)
         {
-            _config = config.Value;
+            _connectionFactory = connectionFactory;
             _adminConnection = adminConnection;
-            _queryParser = queryParser;
         }
-
-        private string BuildConnectionString(UserConfiguration uconfig) =>
-            $"Server={_config.Server};User ID={uconfig.Username};Password={uconfig.Password};Database={uconfig.UserDatabase}";
 
         public async Task<ConnectionResponse> OpenNewConnection()
         {
@@ -38,13 +30,15 @@ namespace Service.Services
             {
                 ConnectionId = connectionId,
                 Username = $"u{uniqueString}",
-                Password = Guid.NewGuid().ToString(),
+                Password = GenerateUniqueString(),
                 UserDatabase = $"{uniqueString}DB",
                 MasterDatabase = "sqlapi"
             };
 
             await _adminConnection.InitializeUser(userConfig);
-            _openConnections[connectionId] = CreateConnection(userConfig);
+            _openConnections[connectionId] = Tuple.Create(
+                _connectionFactory.MakeConnection(userConfig),
+                userConfig);
 
             return new ConnectionResponse
             {
@@ -77,21 +71,15 @@ namespace Service.Services
             }
         }
 
-        public async Task<QueryResponse> RunQuery(QueryRequest request)
-        {
-            var connectionInfo = _openConnections[request.ConnectionId];
+        public async Task<QueryResponse> RunQuery(string connectionId, string query)
+                 {
+            var connectionInfo = _openConnections[connectionId];
             if (connectionInfo == null)
             {
-                throw new Exception($"ConnectionId {request.ConnectionId} is either closed or never existed. Create a new one");
+                throw new Exception($"ConnectionId {connectionId} is either closed or never existed. Create a new one");
             }
 
-            return await connectionInfo.Item1.RunQuery(request.Query);
-        }
-
-        private Tuple<UserConnection, UserConfiguration> CreateConnection(UserConfiguration userConfig)
-        {
-            var sourceConnection = new MySqlConnection(BuildConnectionString(userConfig));
-            return Tuple.Create(new UserConnection(sourceConnection, _queryParser), userConfig);
+            return await connectionInfo.Item1.RunQuery(query);
         }
     }
 }

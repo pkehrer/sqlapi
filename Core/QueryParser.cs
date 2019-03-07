@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Linq;
 
-namespace Service.Services
+namespace Core
 {
     public class QueryParser
     {
-
-        public QueryParser()
-        {
-        }
-
         public string[] ParseQuery(string query)
         {
             return query.Split(';')

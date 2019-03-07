@@ -1,17 +1,16 @@
 ﻿using Core;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace AdminDataPopulator
 {
     class TablePopulator
     {
-        readonly AdminConnection _conn;
+        readonly MysqlAdminConnection _conn;
         private SqlGenerator _sql;
 
-        public TablePopulator(AdminConnection conn)
+        public TablePopulator(MysqlAdminConnection conn)
         {
             _conn = conn;
         }

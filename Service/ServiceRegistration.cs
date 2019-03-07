@@ -1,29 +1,31 @@
 ﻿using Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Service.Services;
+
 namespace Service
 {
     public class ServiceRegistration
     {
-        private readonly IServiceCollection services;
-        private readonly IConfiguration configuration;
+        private readonly IServiceCollection _services;
+        private readonly IConfiguration _configuration;
 
         public ServiceRegistration(IServiceCollection s, IConfiguration c)
         {
-            services = s;
-            configuration = c;
+            _services = s;
+            _configuration = c;
         }
 
         public void Register()
         {
-            services.AddCors();
+            _services.AddCors();
 
-            services.Configure<DbConnectionConfig>(configuration.GetSection("DbConnectionConfig"));
-            services.AddSingleton<UserConnectionManager>();
-            services.AddSingleton<AdminConnection>();
-            services.AddSingleton<SchemaService>();
-            services.AddSingleton<QueryParser>();
+            _services.Configure<DbConnectionConfig>(_configuration.GetSection("DbConnectionConfig"));
+            _services.AddSingleton<QueryParser>();
+            _services.AddSingleton<UserConnectionManager>();
+            _services.AddSingleton<IAdminConnection, PostgresAdminConnection>();
+            _services.AddSingleton<IConnectionFactory, PostgresConnectionFactory>();
+            _services.AddSingleton<SchemaService>();
+            
         }
     }
 }

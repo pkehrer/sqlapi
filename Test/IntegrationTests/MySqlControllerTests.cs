@@ -2,7 +2,6 @@ using Core.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
-using Service.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;

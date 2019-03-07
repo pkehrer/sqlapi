@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Service.Services;
 using Service.Models;
 using Core.Models;
 using Core;
@@ -43,7 +41,7 @@ namespace Service.Controllers
         [HttpPost("query")]
         public async Task<ActionResult<QueryResponse>> RunQuery([FromBody] QueryRequest request)
         {
-            return await _connectionManager.RunQuery(request);
+            return await _connectionManager.RunQuery(request.ConnectionId, request.Query);
         }
 
         [HttpGet("schema")]
