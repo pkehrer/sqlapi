@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp2.2</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="..\..\secrets\db.json" Link="db.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Core\Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.2.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
+    </ItemGroup>
+
+</Project>

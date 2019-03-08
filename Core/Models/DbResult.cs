@@ -22,7 +22,7 @@ namespace Core.Models
                 return emptyResponse + Environment.NewLine;
             }
 
-            var s = string.Join('\t', ColumnNames) + "Rows: " + RowCount + Environment.NewLine;
+            var s = string.Join('\t', ColumnNames) + "\tRows: " + RowCount + Environment.NewLine;
             foreach (var row in Rows)
             {
                 s += string.Join('\t', row);

@@ -17,14 +17,14 @@ namespace AdminDataPopulator
             var dbConfig = config.GetSection("DbConnectionConfig").Get<DbConnectionConfig>();
 
             var conn = new MysqlAdminConnection(Options.Create(dbConfig));
-            var tablePopulator = new TablePopulator(conn);
+            var tablePopulator = new MysqlTablePopulator(conn);
 
             Run(tablePopulator).Wait();
 
             Console.ReadKey();
         }
 
-        private static async Task Run(TablePopulator tablePopulator)
+        private static async Task Run(MysqlTablePopulator tablePopulator)
         {
             try
             {

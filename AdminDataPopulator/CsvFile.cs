@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AdminDataPopulator
 {
-    class CsvFile
+    public class CsvFile
     {
         readonly string _path;
         public CsvFile(string path)

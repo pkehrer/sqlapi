@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace Core
 {
-    public class SchemaService
+    public class MysqlSchemaService : ISchemaService
     {
         readonly IAdminConnection _conn;
         private IList<TableDefinition> _cachedSchema;
 
-        public SchemaService(IAdminConnection conn)
+        public MysqlSchemaService(IAdminConnection conn)
         {
             _conn = conn;
         }

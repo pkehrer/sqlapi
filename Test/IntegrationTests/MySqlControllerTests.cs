@@ -79,7 +79,7 @@ namespace Service.IntegrationTests
             {
                 await r.Run("create table table1(id int)");
                 await r.Run("create table table2(id int)");
-                var showRes = await r.Run("show tables;");
+                var showRes = await r.Run("select table_name from information_schema.tables where table_schema = current_schema and table_type != 'VIEW'");
                 var expectedResult = DbResultBuilder.Create()
                     .AddRow("table1")
                     .AddRow("table2")

@@ -24,7 +24,7 @@ namespace Service
             _services.AddSingleton<UserConnectionManager>();
             _services.AddSingleton<IAdminConnection, PostgresAdminConnection>();
             _services.AddSingleton<IConnectionFactory, PostgresConnectionFactory>();
-            _services.AddSingleton<SchemaService>();
+            _services.AddSingleton<ISchemaService, PostgresSchemaService>();
             
         }
     }
